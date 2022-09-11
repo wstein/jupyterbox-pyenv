@@ -1,0 +1,27 @@
+#!/bin/env sh
+
+JUPYTER_IMAGE=${1:-jupyter/minimal-notebook}
+WORKDIR=${2:-.}
+
+# for uid/gid mapping please refer to:
+# https://github.com/containers/podman/blob/main/troubleshooting.md#33-container-creates-a-file-that-is-not-owned-by-the-users-regular-uid
+
+SUBUID_SIZE=$(($(podman info --format "{{ range .Host.IDMappings.UIDMap }}+{{.Size }}{{end }}") - 1))
+SUBGID_SIZE=$(($(podman info --format "{{ range .Host.IDMappings.GIDMap }}+{{.Size }}{{end }}") - 1))
+
+CUID=1000
+CGID=100
+
+TUID=$((CUID + 1))
+TGID=$((CGID + 1))
+
+OUID=$((SUBUID_SIZE - CUID))
+OGID=$((SUBGID_SIZE - CGID))
+
+podman run -it --rm -p 8888:8888 \
+  -v "$WORKDIR":/home/jovyan/work:Z \
+  -v pyenv_versions:/opt/pyenv/versions:Z \
+  -w /home/jovyan/work \
+  --uidmap $CUID:0:1 --uidmap 0:1:$CUID --uidmap $TUID:$TUID:$OUID \
+  --gidmap $CGID:0:1 --gidmap 0:1:$CGID --gidmap $TGID:$TGID:$OGID \
+  "$JUPYTER_IMAGE"
