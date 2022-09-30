@@ -21,6 +21,7 @@ OGID=$((SUBGID_SIZE - CGID))
 podman run -it --rm -p 8888:8888 \
   -v "$WORKDIR":/home/jovyan/work:Z \
   -v pyenv_versions:/opt/pyenv/versions:Z \
+  -v vscode-server:/home/jovyan/.vscode-server:Z \
   -w /home/jovyan/work \
   --uidmap $CUID:0:1 --uidmap 0:1:$CUID --uidmap $TUID:$TUID:$OUID \
   --gidmap $CGID:0:1 --gidmap 0:1:$CGID --gidmap $TGID:$TGID:$OGID \
